@@ -1,14 +1,6 @@
 """
 Модуль записи на прием к врачу
-ИНТЕГРИРУЕМЫЙ МОДУЛЬ - будет подключен к основному приложению
-
-Функции модуля:
-- get_doctors() - получение списка врачей
-- get_available_slots() - получение свободного времени
-- check_availability() - проверка доступности
-- make_appointment() - создание записи
-- get_appointments_by_phone() - поиск записей по телефону
-- cancel_appointment() - отмена записи
+ИНТЕГРИРУЕМЫЙ МОДУЛЬ - с расширенной отладкой
 """
 
 import json
@@ -20,7 +12,6 @@ from typing import List, Dict, Optional
 # КОНСТАНТЫ
 # ============================================================
 
-# Список врачей
 DOCTORS = [
     {'id': 1, 'name': 'Иванова А.А.', 'specialty': 'Терапевт', 'schedule': '09:00-17:00'},
     {'id': 2, 'name': 'Петров Б.Б.', 'specialty': 'Педиатр', 'schedule': '09:00-15:00'},
@@ -28,59 +19,59 @@ DOCTORS = [
     {'id': 4, 'name': 'Кузнецов Г.Г.', 'specialty': 'Лор', 'schedule': '08:00-14:00'}
 ]
 
-# Доступное время для записи (все возможные слоты)
 AVAILABLE_TIMES = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00']
 
-# Директория для хранения данных
 DATA_DIR = 'data'
 APPOINTMENTS_FILE = os.path.join(DATA_DIR, 'appointments.json')
 
+# Флаг для включения детальной отладки
+DEBUG_MODE = True
 
-# ============================================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (внутренние)
-# ============================================================
+
+def _log(msg: str):
+    """Функция для логирования отладочных сообщений"""
+    if DEBUG_MODE:
+        print(f"[DEBUG] {msg}")
+
 
 def _ensure_data_dir():
     """Создает папку для данных, если её нет"""
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-        print(f"[Модуль] Создана папка для данных: {DATA_DIR}")
+        _log(f"Создана папка для данных: {DATA_DIR}")
 
 
 def _load_appointments() -> List[Dict]:
-    """
-    Загружает все записи из JSON файла
-
-    Returns:
-        list: список записей
-    """
+    """Загружает все записи из JSON файла"""
     _ensure_data_dir()
 
     if not os.path.exists(APPOINTMENTS_FILE):
-        # Если файла нет, создаем пустой список
+        _log("Файл appointments.json не найден, создаем пустой список")
         return []
 
     try:
         with open(APPOINTMENTS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        # Если файл поврежден или не найден, возвращаем пустой список
+            data = json.load(f)
+            _log(f"Загружено {len(data)} записей из файла")
+            return data
+    except json.JSONDecodeError as e:
+        _log(f"Ошибка чтения JSON: {e}")
+        return []
+    except Exception as e:
+        _log(f"Неожиданная ошибка при загрузке: {e}")
         return []
 
 
 def _save_appointments(appointments: List[Dict]):
-    """
-    Сохраняет записи в JSON файл
-
-    Args:
-        appointments: список записей для сохранения
-    """
+    """Сохраняет записи в JSON файл"""
     _ensure_data_dir()
 
-    with open(APPOINTMENTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(appointments, f, ensure_ascii=False, indent=2)
-
-    print(f"[Модуль] Сохранено {len(appointments)} записей")
+    try:
+        with open(APPOINTMENTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(appointments, f, ensure_ascii=False, indent=2)
+        _log(f"Сохранено {len(appointments)} записей")
+    except Exception as e:
+        _log(f"Ошибка при сохранении: {e}")
 
 
 # ============================================================
@@ -88,44 +79,43 @@ def _save_appointments(appointments: List[Dict]):
 # ============================================================
 
 def get_doctors() -> List[Dict]:
-    """
-    Возвращает список врачей
-
-    Returns:
-        list: список врачей с полями id, name, specialty, schedule
-    """
-    print("[Модуль] Вызвана функция get_doctors()")
+    """Возвращает список врачей"""
+    _log("=== get_doctors() вызвана ===")
+    _log(f"Возвращаем {len(DOCTORS)} врачей")
+    for d in DOCTORS:
+        _log(f"  - {d['specialty']}: {d['name']}")
     return DOCTORS
 
 
 def get_available_slots(doctor_id: int, date: str) -> List[str]:
     """
     Возвращает список свободных слотов для врача на указанную дату
-
-    Args:
-        doctor_id: ID врача
-        date: дата в формате ГГГГ-ММ-ДД
-
-    Returns:
-        list: список свободного времени (например, ["09:00", "10:00"])
     """
-    print(f"[Модуль] Вызвана get_available_slots(doctor_id={doctor_id}, date={date})")
+    _log("=" * 50)
+    _log(f"=== get_available_slots() вызвана ===")
+    _log(f"  doctor_id: {doctor_id} (тип: {type(doctor_id)})")
+    _log(f"  date: {date}")
 
     # Загружаем все записи
     appointments = _load_appointments()
+    _log(f"  Всего записей в базе: {len(appointments)}")
 
-    # Находим занятые слоты для указанного врача и даты
-    booked_slots = [
-        apt['time'] for apt in appointments
-        if apt['doctor_id'] == doctor_id and apt['date'] == date
-    ]
+    # Находим занятые слоты
+    booked_slots = []
+    for apt in appointments:
+        _log(f"    Проверяем запись: doctor_id={apt['doctor_id']}, date={apt['date']}, time={apt['time']}")
+        if apt['doctor_id'] == doctor_id and apt['date'] == date:
+            booked_slots.append(apt['time'])
+            _log(f"      -> Занято! {apt['time']}")
 
-    print(f"[Модуль] Занятые слоты: {booked_slots}")
+    _log(f"  Занятые слоты: {booked_slots}")
 
     # Вычисляем свободные слоты
     available_slots = [time for time in AVAILABLE_TIMES if time not in booked_slots]
 
-    print(f"[Модуль] Свободные слоты: {available_slots}")
+    _log(f"  Все возможные слоты: {AVAILABLE_TIMES}")
+    _log(f"  Свободные слоты: {available_slots}")
+    _log(f"  Количество свободных: {len(available_slots)}")
 
     return available_slots
 
@@ -133,21 +123,17 @@ def get_available_slots(doctor_id: int, date: str) -> List[str]:
 def check_availability(doctor_id: int, date: str, time: str) -> bool:
     """
     Проверяет, свободно ли указанное время
-
-    Args:
-        doctor_id: ID врача
-        date: дата в формате ГГГГ-ММ-ДД
-        time: время в формате ЧЧ:ММ
-
-    Returns:
-        bool: True если свободно, False если занято
     """
-    print(f"[Модуль] Вызвана check_availability(doctor_id={doctor_id}, date={date}, time={time})")
+    _log("=" * 50)
+    _log(f"=== check_availability() вызвана ===")
+    _log(f"  doctor_id: {doctor_id}")
+    _log(f"  date: {date}")
+    _log(f"  time: {time}")
 
     available_slots = get_available_slots(doctor_id, date)
     is_available = time in available_slots
 
-    print(f"[Модуль] Результат проверки: {is_available}")
+    _log(f"  Результат: {'СВОБОДНО' if is_available else 'ЗАНЯТО'}")
 
     return is_available
 
@@ -156,40 +142,49 @@ def make_appointment(doctor_id: int, doctor_name: str, date: str, time: str,
                      patient_name: str, patient_phone: str) -> Dict:
     """
     Создает новую запись на прием
-
-    Args:
-        doctor_id: ID врача
-        doctor_name: ФИО врача
-        date: дата приема
-        time: время приема
-        patient_name: ФИО пациента
-        patient_phone: телефон пациента
-
-    Returns:
-        dict: {'success': bool, 'ticket_number': str, 'error': str, 'appointment': dict}
     """
-    print(f"[Модуль] Вызвана make_appointment()")
-    print(f"[Модуль] Данные: врач={doctor_name}, дата={date}, время={time}, пациент={patient_name}")
+    _log("=" * 50)
+    _log(f"=== make_appointment() вызвана ===")
+    _log(f"  doctor_id: {doctor_id}")
+    _log(f"  doctor_name: {doctor_name}")
+    _log(f"  date: {date}")
+    _log(f"  time: {time}")
+    _log(f"  patient_name: {patient_name}")
+    _log(f"  patient_phone: {patient_phone}")
 
     # Проверка доступности времени
+    _log("  Шаг 1: Проверка доступности времени...")
     if not check_availability(doctor_id, date, time):
+        _log("  Шаг 1: ОШИБКА - время занято")
         return {
             'success': False,
             'error': 'Выбранное время уже занято'
         }
+    _log("  Шаг 1: Время свободно ✓")
 
     # Проверка заполнения данных
+    _log("  Шаг 2: Проверка заполнения данных...")
     if not patient_name or not patient_phone:
+        _log("  Шаг 2: ОШИБКА - не заполнены ФИО или телефон")
         return {
             'success': False,
             'error': 'Заполните ФИО и телефон пациента'
         }
+    _log(f"  Шаг 2: Данные заполнены: {patient_name}, {patient_phone} ✓")
 
     # Загружаем существующие записи
+    _log("  Шаг 3: Загрузка существующих записей...")
     appointments = _load_appointments()
 
     # Генерируем новый ID
-    new_id = max([apt['id'] for apt in appointments], default=0) + 1
+    if appointments:
+        max_id = max([apt['id'] for apt in appointments])
+        new_id = max_id + 1
+        _log(f"  Шаг 4: Существующие ID: {[apt['id'] for apt in appointments]}")
+        _log(f"  Шаг 4: Максимальный ID: {max_id}, новый ID: {new_id}")
+    else:
+        new_id = 1
+        _log("  Шаг 4: Нет существующих записей, новый ID: 1")
 
     # Создаем запись
     new_appointment = {
@@ -203,11 +198,14 @@ def make_appointment(doctor_id: int, doctor_name: str, date: str, time: str,
         'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
 
+    _log(f"  Шаг 5: Создана запись: {new_appointment}")
+
     # Сохраняем
     appointments.append(new_appointment)
     _save_appointments(appointments)
 
-    print(f"[Модуль] Запись создана, ID={new_id}, талон=ТАЛОН-{new_id}")
+    _log(f"  Шаг 6: Запись сохранена, талон: ТАЛОН-{new_id}")
+    _log("=" * 50)
 
     return {
         'success': True,
@@ -217,53 +215,45 @@ def make_appointment(doctor_id: int, doctor_name: str, date: str, time: str,
 
 
 def get_appointments_by_phone(phone: str) -> List[Dict]:
-    """
-    Находит все записи по номеру телефона
-
-    Args:
-        phone: номер телефона пациента
-
-    Returns:
-        list: список записей
-    """
-    print(f"[Модуль] Вызвана get_appointments_by_phone(phone={phone})")
+    """Находит все записи по номеру телефона"""
+    _log("=" * 50)
+    _log(f"=== get_appointments_by_phone() вызвана ===")
+    _log(f"  phone: {phone}")
 
     appointments = _load_appointments()
+    _log(f"  Всего записей в базе: {len(appointments)}")
 
-    result = [apt for apt in appointments if apt['patient_phone'] == phone]
+    result = []
+    for apt in appointments:
+        _log(f"    Проверяем запись: phone={apt['patient_phone']}")
+        if apt['patient_phone'] == phone:
+            result.append(apt)
+            _log(f"      -> СОВПАДЕНИЕ! ID={apt['id']}")
 
-    print(f"[Модуль] Найдено записей: {len(result)}")
+    _log(f"  Найдено записей: {len(result)}")
 
     return result
 
 
 def cancel_appointment(appointment_id: int) -> Dict:
-    """
-    Отменяет запись по ID
-
-    Args:
-        appointment_id: ID записи для отмены
-
-    Returns:
-        dict: {'success': bool, 'error': str}
-    """
-    print(f"[Модуль] Вызвана cancel_appointment(appointment_id={appointment_id})")
+    """Отменяет запись по ID"""
+    _log("=" * 50)
+    _log(f"=== cancel_appointment() вызвана ===")
+    _log(f"  appointment_id: {appointment_id}")
 
     appointments = _load_appointments()
+    _log(f"  Всего записей до удаления: {len(appointments)}")
 
-    # Ищем запись
     for i, apt in enumerate(appointments):
+        _log(f"    Проверяем запись: ID={apt['id']}")
         if apt['id'] == appointment_id:
-            # Удаляем запись
+            _log(f"      -> НАЙДЕНО! Удаляем запись: {apt}")
             removed = appointments.pop(i)
             _save_appointments(appointments)
-
-            print(f"[Модуль] Запись отменена: {removed}")
-
+            _log(f"  Запись удалена, осталось {len(appointments)} записей")
             return {'success': True}
 
-    print(f"[Модуль] Запись с ID={appointment_id} не найдена")
-
+    _log(f"  Запись с ID={appointment_id} не найдена")
     return {'success': False, 'error': 'Запись не найдена'}
 
 
@@ -273,23 +263,23 @@ def cancel_appointment(appointment_id: int) -> Dict:
 
 if __name__ == '__main__':
     """Тестирование модуля (запуск отдельно)"""
-    print("=" * 50)
+    print("\n" + "=" * 60)
     print("ТЕСТИРОВАНИЕ МОДУЛЯ appointment.py")
-    print("=" * 50)
+    print("=" * 60)
 
     # Тест 1: Получение списка врачей
-    print("\n1. get_doctors():")
+    print("\n[Тест 1] get_doctors():")
     doctors = get_doctors()
     for d in doctors:
         print(f"   - {d['specialty']} {d['name']}")
 
-    # Тест 2: Проверка свободных слотов
-    print("\n2. get_available_slots(doctor_id=1, date='2026-03-25'):")
+    # Тест 2: Проверка свободных слотов (без записей)
+    print("\n[Тест 2] get_available_slots(doctor_id=1, date='2026-03-25'):")
     slots = get_available_slots(1, '2026-03-25')
     print(f"   Свободные слоты: {slots}")
 
     # Тест 3: Создание записи
-    print("\n3. make_appointment():")
+    print("\n[Тест 3] make_appointment():")
     result = make_appointment(
         doctor_id=1,
         doctor_name='Иванова А.А.',
@@ -301,9 +291,16 @@ if __name__ == '__main__':
     print(f"   Результат: {result}")
 
     # Тест 4: Проверка, что время стало занятым
-    print("\n4. Проверка доступности после записи:")
+    print("\n[Тест 4] Проверка доступности после записи:")
     is_available = check_availability(1, '2026-03-25', '10:00')
     print(f"   Время 10:00 доступно? {is_available}")
 
-    print("\n" + "=" * 50)
+    # Тест 5: Проверка записей по телефону
+    print("\n[Тест 5] get_appointments_by_phone('+79991112233'):")
+    appointments = get_appointments_by_phone('+79991112233')
+    for apt in appointments:
+        print(f"   - ТАЛОН-{apt['id']}: {apt['date']} {apt['time']}")
+
+    print("\n" + "=" * 60)
     print("Тестирование модуля завершено")
+    print("=" * 60)
