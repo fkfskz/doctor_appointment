@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запись к врачу - ДЕМО (без модуля)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .demo-badge {
+            background: #ff9800;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .doctors-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .doctor-card {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .doctor-name {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .doctor-spec {
+            color: #667eea;
+            margin: 5px 0;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .warning {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff9800;
+            margin-top: 15px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Запись к врачу</h1>
+            <p>Городская поликлиника №1</p>
+            <div class="demo-badge">⚠️ ДЕМО-ВЕРСИЯ (без модуля записи)</div>
+        </div>
+        
+        <!-- Список врачей -->
+        <div class="card">
+            <h2>👨‍⚕️ Наши врачи</h2>
+            <div class="doctors-list">
+                {% for doctor in doctors %}
+                <div class="doctor-card">
+                    <div class="doctor-name">{{ doctor.name }}</div>
+                    <div class="doctor-spec">{{ doctor.specialty }}</div>
+                    <div class="doctor-schedule">⏰ {{ doctor.schedule }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Форма записи (демо) -->
+        <div class="card">
+            <h2>📝 Запись на прием (ДЕМО)</h2>
+            
+            <div class="warning">
+                ⚠️ ВНИМАНИЕ! Это демонстрационная версия.<br>
+                Интегрируемый модуль еще не подключен.<br>
+                Записи НЕ сохраняются, проверка занятости НЕ работает.
+            </div>
+            
+            <form id="appointmentForm">
+                <div class="row">
+                    <div class="form-group">
+                        <label>👨‍⚕️ Врач</label>
+                        <select id="doctor" name="doctor_id" required>
+                            <option value="">-- Выберите врача --</option>
+                            {% for doctor in doctors %}
+                            <option value="{{ doctor.id }}" data-name="{{ doctor.name }}">
+                                {{ doctor.specialty }} - {{ doctor.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>📅 Дата</label>
+                        <input type="date" id="date" name="date" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>🕐 Время</label>
+                    <select id="time" name="time" required>
+                        <option value="">-- Выберите время --</option>
+                    </select>
+                </div>
+                
+                <div class="row">
+                    <div class="form-group">
+                        <label>👤 ФИО пациента</label>
+                        <input type="text" id="patientName" name="patient_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📞 Телефон</label>
+                        <input type="tel" id="patientPhone" name="patient_phone" required>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="doctorName" name="doctor_name">
+                <button type="submit" class="btn">✅ Записаться (ДЕМО)</button>
+            </form>
+            
+            <div id="formResult" class="hidden"></div>
+        </div>
+        
+        <!-- Пояснение -->
+        <div class="card">
+            <h2>📌 О системе</h2>
+            <p>Текущая версия: <strong>Без интегрированного модуля</strong></p>
+            <p>Функционал:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>✅ Отображение списка врачей</li>
+                <li>✅ Выбор даты и времени (всегда доступно всё время)</li>
+                <li>❌ Нет проверки занятости</li>
+                <li>❌ Нет сохранения записей</li>
+                <li>❌ Нет выдачи талонов</li>
+            </ul>
+            <p style="margin-top: 15px; color: #ff9800;">
+                ⏳ Ожидается интеграция модуля appointment.py
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        const doctorSelect = document.getElementById('doctor');
+        const dateInput = document.getElementById('date');
+        const timeSelect = document.getElementById('time');
+        const appointmentForm = document.getElementById('appointmentForm');
+        const formResult = document.getElementById('formResult');
+        
+        // Устанавливаем минимальную дату (сегодня)
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
+        
+        // Загрузка доступного времени (в демо-версии всегда все слоты)
+        async function loadSlots() {
+            const doctorId = doctorSelect.value;
+            const date = dateInput.value;
+            
+            if (!doctorId || !date) {
+                timeSelect.innerHTML = '<option value="">-- Выберите врача и дату --</option>';
+                return;
+            }
+            
+            const response = await fetch(`/get_slots?doctor_id=${doctorId}&date=${date}`);
+            const data = await response.json();
+            
+            if (data.slots.length === 0) {
+                timeSelect.innerHTML = '<option value="">-- Нет свободного времени --</option>';
+            } else {
+                timeSelect.innerHTML = '<option value="">-- Выберите время --</option>' +
+                    data.slots.map(slot => `<option value="${slot}">${slot}</option>`).join('');
+            }
+        }
+        
+        doctorSelect.addEventListener('change', loadSlots);
+        dateInput.addEventListener('change', loadSlots);
+        
+        // Установка имени врача
+        doctorSelect.addEventListener('change', () => {
+            const selected = doctorSelect.options[doctorSelect.selectedIndex];
+            const doctorName = selected.getAttribute('data-name') || '';
+            document.getElementById('doctorName').value = doctorName;
+        });
+        
+        // Обработка формы (демо-версия)
+        appointmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(appointmentForm);
+            
+            const response = await fetch('/make_appointment', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                formResult.innerHTML = `
+                    <div class="success">
+                        ✅ ${result.ticket_number}<br>
+                        ${result.message}<br>
+                        <small>В реальной версии запись будет сохранена</small>
+                    </div>
+                `;
+            } else {
+                formResult.innerHTML = `<div class="error">❌ ${result.error}</div>`;
+            }
+            
+            formResult.classList.remove('hidden');
+            
+            setTimeout(() => {
+                formResult.classList.add('hidden');
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
